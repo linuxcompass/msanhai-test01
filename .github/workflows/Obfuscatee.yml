@@ -36,7 +36,7 @@ jobs:
 
       - name: Debug environment
         run: |
-          echo "Current PATH: $PATH"
+          echo "PATH: $PATH"
           node -v
           npm -v
           which javascript-obfuscator
