@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - main
+  schedule:
+        # Runs everyday at 1:00 AM
+        - cron: "0 1 * * *"
 
 permissions:
   contents: write
@@ -11,7 +14,6 @@ permissions:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
 
     steps:
       - name: Check out the code
@@ -22,24 +24,9 @@ jobs:
         with:
           node-version: "latest"
 
-      - name: Cache Node.js modules
-        uses: actions/cache@v3
-        with:
-          path: ~/.npm
-          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
-          restore-keys: |
-            ${{ runner.os }}-node-
-
       - name: Install dependencies
         run: |
           npm install -g javascript-obfuscator
-
-      - name: Debug environment
-        run: |
-          echo "PATH: $PATH"
-          node -v
-          npm -v
-          which javascript-obfuscator
 
       - name: Clone BPB workjs
         run: |
@@ -50,12 +37,15 @@ jobs:
           javascript-obfuscator origin.js --output _worker.js \
           --compact true \
           --control-flow-flattening true \
-          --control-flow-flattening-threshold 0.75 \
+          --control-flow-flattening-threshold 1 \
           --dead-code-injection true \
-          --dead-code-injection-threshold 0.5 \
-          --identifier-names-generator mangled \
+          --dead-code-injection-threshold 1 \
+          --identifier-names-generator hexadecimal \
+          --rename-globals true \
           --string-array true \
-          --string-array-threshold 0.75 \
+          --string-array-encoding 'rc4' \
+          --string-array-threshold 1 \
+          --transform-object-keys true \
           --unicode-escape-sequence true
 
       - name: Commit changes
