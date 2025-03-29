@@ -45,14 +45,6 @@ jobs:
         run: |
           wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
 
-      - name: Check javascript-obfuscator installation
-        run: |
-          if! command -v javascript-obfuscator &> /dev/null
-          then
-              echo "javascript-obfuscator could not be found"
-              exit 1
-          fi
-
       - name: Obfuscate BPB worker js
         run: |
           npx javascript-obfuscator origin.js --output _worker.js \
