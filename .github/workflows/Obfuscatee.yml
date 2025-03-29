@@ -1,0 +1,70 @@
+name: Build Obfuscate BPB Panel
+
+on:
+  push:
+    branches:
+      - main
+  schedule:
+    # 每天凌晨 1:00 运行
+    - cron: "0 1 * * *"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30 # 增加超时时间为 30 分钟
+
+    steps:
+      # 检出代码
+      - name: Check out the code
+        uses: actions/checkout@v4
+
+      # 设置 Node.js 环境
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "latest"
+
+      # 缓存 Node.js 依赖
+      - name: Cache Node.js modules
+        uses: actions/cache@v3
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      # 安装混淆工具
+      - name: Install dependencies
+        run: |
+          npm install -g javascript-obfuscator
+
+      # 下载 BPB 源文件
+      - name: Clone BPB workjs
+        run: |
+          wget -O origin.js https://raw.githubusercontent.com/bia-pain-bache/BPB-Worker-Panel/refs/heads/main/build/unobfuscated-worker.js
+
+      # 混淆 BPB 源文件
+      - name: Obfuscate BPB worker js
+        run: |
+          javascript-obfuscator origin.js --output _worker.js \
+          --compact true \
+          --control-flow-flattening true \
+          --control-flow-flattening-threshold 0.75 \ # 降低复杂度
+          --dead-code-injection true \
+          --dead-code-injection-threshold 0.5 \ # 减少死代码注入
+          --identifier-names-generator mangled \ # 使用更简单的命名生成器
+          --string-array true \
+          --string-array-threshold 0.75 \ # 减少字符串数组的使用
+          --unicode-escape-sequence true
+
+      # 提交混淆后的文件
+      - name: Commit changes
+        uses: stefanzweifel/git-auto-commit-action@v5
+        with:
+          branch: main
+          commit_message: ':arrow_up: update latest bpb panel'
+          commit_author: 'github-actions[bot] <github-actions[bot]@users.noreply.github.com>'
+          push_options: '--set-upstream'
